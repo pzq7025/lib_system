@@ -41,6 +41,7 @@ python manage.py runserver 0.0.0.0:8000
 Go into its directory
 
 一、strat project
+
 npm run start
 
 # url address
