@@ -14,8 +14,11 @@ at the setting.py file, I hidden my rdf-mysql information.
 =====================================================================
 # version
 django == 2.14
+
 bootstrap_admin == 0.4.3
+
 mysql == 5.7.25
+
 react == 
 
 ======================================================================
