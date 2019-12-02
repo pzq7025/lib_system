@@ -26,7 +26,7 @@ react ==
 ======================================================================
 # python server
 Go into its directory with manage.py file name
-# start project
+一、start project
 user instruction to start project
 1. create migration files
 python manage.py makemigrations
@@ -37,7 +37,7 @@ python manage.py runserver 0.0.0.0:8000
 
 # react server
 Go into its directory
-# strat project
+一、strat project
 npm run start
 
 # url address
