@@ -30,12 +30,15 @@ Go into its directory with manage.py file name
 
 一、start project
 user instruction to start project
+
 1. create migration files
 
 python manage.py makemigrations
+
 2. create migration instruct
 
 python manage.py migrate
+
 3. start wsgi
 
 python manage.py runserver 0.0.0.0:8000
