@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'corsheaders',
     'search',
     'user',
 ]
@@ -80,7 +81,7 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 驱动
-        'NAME': 'admin_test',
+        'NAME': 'lib_system',
         'USER': 'root',
         'PASSWORD': 'tyy5201314!',
         'HOST': 'rm-bp1a16zhf40aqg6f4po.mysql.rds.aliyuncs.com',

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
-from .models import Book, Browser, Manage, BorrowBookInfo, BorrowInfo
+from .models import Book, Browser, BorrowBookInfo, BorrowInfo
 from django.db.models import Q
 from django.db.models import F
 from django.core import serializers
@@ -106,7 +106,7 @@ def book_cancel_borrow(request):
     """
     user_id = request.GET['userId']
     book_id = request.GET['bookId']
-    operator = BorrowInfo.objects.filter(Q(borrow_info=user_id) & Q(book_id=book_id)).delete()
+    operator = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).delete()
     if operator:
         data = {
             'code': 0
@@ -131,6 +131,10 @@ def book_borrow(request):
     book_id = request.GET['bookId']
     result_user = Browser.objects.filter(Q(browser_id=user_id) & F('overdraft') >= 0)
     result_book = Book.objects.filter(Q(book_id=book_id) & Q(book_status=True))
+    # 向BorrowInfo添加借阅的信息
+    # BorrowInfo.objects.create()
+    # 向BorrowBookInfo添加书籍目前状态的信息
+    # BorrowBookInfo.objects.create()
     if result_book and result_user:
         BorrowInfo.objects.create()
         data = {
@@ -150,7 +154,7 @@ def search_own_book(request):
     :return:
     """
     user_id = request.GET['userId']
-    result = BorrowInfo.objects.filter(Q(browser_id=user_id))
+    result = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id))
     if result:
         pin = serializers.serialize("json", result)
         return JsonResponse(pin, safe=False)
