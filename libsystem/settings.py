@@ -82,10 +82,10 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 驱动
-        'NAME': '*********',
+        'NAME': 'lib_system',
         'USER': '*********',
         'PASSWORD': '*********',
-        'HOST': '************',
+        'HOST': 'rm-bp1a16zhf40aqg6f4po.mysql.rds.aliyuncs.com',
         'PORT': '3306',
     },
 }
