@@ -20,8 +20,8 @@ def login(request):
     :param request:
     :return:
     """
-    user_id = request.GET['userId']
-    user_password = request.GET['passWord']
+    user_id = request.POST['userId']
+    user_password = request.POST['passWord']
     result_user = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password))
     if result_user:
         data = {
@@ -67,9 +67,13 @@ def search_info(request):
     """
     user_id = request.GET['userId']
     user_password = request.GET['passWord']
-    result = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password))
-    if result:
-        pin = serializers.serialize("json", result)
+    result_person = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password))
+    result_browser = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id))
+    if result_person:
+        pin = serializers.serialize("json", result_person)
+        pin_x = serializers.serialize("json", result_browser)
+        print(pin)
+        print(pin_x)
         return JsonResponse(pin, safe=False)
     else:
         data = {
