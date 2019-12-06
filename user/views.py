@@ -1,9 +1,10 @@
+import json
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from .models import Book, Browser, BorrowBookInfo, BorrowInfo
 from django.db.models import Q
 from django.db.models import F
-from django.core import serializers
+import datetime
 
 """
 0: successful
@@ -20,12 +21,18 @@ def login(request):
     :param request:
     :return:
     """
-    user_id = request.POST['userId']
-    user_password = request.POST['passWord']
-    result_user = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password))
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    user_id = accept['userId']
+    user_password = accept['passWord']
+    # 登录验证  成功返回True
+    result_user = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password)).values_list('browser_id', 'browser_name', 'browser_type')
     if result_user:
         data = {
-            'code': 0
+            'code': 0,
+            'userId': result_user[0][0],
+            'username': result_user[0][1],
+            'userType': result_user[0][2],
         }
     else:
         data = {
@@ -44,32 +51,19 @@ def add_money(request):
     """
     user_id = request.GET['userId']
     money = request.GET['money']
+    # 充钱 将增加余额数量
     result = Browser.objects.filter(Q(browser_id=user_id))
     if result:
-        # Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') + money)
-        # browser_info = BorrowInfo.objects.get(borrow_browser_id=user_id).rbi_book_id.
-        # print(browser_info)
-        book_info = Book.objects.filter(Q(borrow_browser_id=user_id)).values()
+        after = Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') + money)
         data = {
-            'title': '',
-            'id': '',
-            'price': '',
-            'number': '',  # 剩余数量
-            'type': '',  # 图书种类 书籍type=1 或者 杂志type=2
-            'author': '',
-            'description': '',
-            'content': '',
-            'time': '',  # 对于有userId的
-            'isBorrow': '',  # 对于有userId的
+            'code': 0,
+            'leftMoney': after,
         }
-        # pin = serializers.serialize("json", browser_info)
-        pin = {1: 2}
-        return JsonResponse(pin, safe=False)
     else:
         data = {
             'code': 1
         }
-        return JsonResponse(data)
+    return JsonResponse(data)
 
 
 def search_info(request):
@@ -78,16 +72,26 @@ def search_info(request):
     :param request:
     :return:
     """
-    user_id = request.GET['userId']
-    user_password = request.GET['passWord']
-    result_person = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password))
-    result_browser = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id))
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    user_id = accept['userId']
+    user_password = accept['passWord']
+    # 个人信息
+    result_person = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password)).values_list(
+        'browser_id',
+        'browser_name',
+        'overdraft',
+        'browser_type',
+    )
+    # 获取用户的信息 输出需求
     if result_person:
-        pin = serializers.serialize("json", result_person)
-        pin_x = serializers.serialize("json", result_browser)
-        print(pin)
-        print(pin_x)
-        return JsonResponse(pin, safe=False)
+        data = {
+            'code': 0,
+            'userId': result_person[0][0],
+            'userName': result_person[0][1],
+            'leftMoney': result_person[0][2],
+            'userType': result_person[0][3],
+        }
     else:
         data = {
             'code': 1
@@ -101,8 +105,11 @@ def change_password(request):
     :param request:
     :return:
     """
-    user_id = request.GET['userId']
-    user_password = request.GET['passWord']
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    user_id = accept['userId']
+    user_password = accept['passWord']
+    # 获取前端传来的数据直接对数据进行修改
     result_user = Browser.objects.filter(Q(browser_id=user_id)).update(browser_password=user_password)
     if result_user:
         data = {
@@ -121,10 +128,18 @@ def book_cancel_borrow(request):
     :param request:
     :return:
     """
-    user_id = request.GET['userId']
-    book_id = request.GET['bookId']
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    user_id = accept['userId']
+    book_id = accept['bookId']
+    # 如果操作成功  说明数据库中含有此信息  注意同个人不能同时借多本书
+    # operator = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).order_by('-borrow_info').last().delete()
+    # 因为不借阅就删除  所以不会出现冗余数据duplicate
     operator = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).delete()
     if operator:
+        # 对于存在数据  取消订阅  剩余数量+1 借阅量-1
+        BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(book_remain=F('book_remain') + 1)
+        BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(browser_total=F('browser_total') - 1)
         data = {
             'code': 0
         }
@@ -136,24 +151,43 @@ def book_cancel_borrow(request):
 
 
 def book_borrow(request):
-    # 未完成
     """
     userId
     bookId
-    借阅书籍
+    借阅书籍  每次借阅完成最后的图书系统也要插入数据插入借出去的书籍
     :param request:
     :return:
     """
-    user_id = request.GET['userId']
-    book_id = request.GET['bookId']
-    result_user = Browser.objects.filter(Q(browser_id=user_id) & F('overdraft') >= 0)
-    result_book = Book.objects.filter(Q(book_id=book_id) & Q(book_status=True))
-    # 向BorrowInfo添加借阅的信息
-    # BorrowInfo.objects.create()
-    # 向BorrowBookInfo添加书籍目前状态的信息
-    # BorrowBookInfo.objects.create()
-    if result_book and result_user:
-        BorrowInfo.objects.create()
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    user_id = accept['userId']
+    book_id = accept['bookId']
+    result_user = Browser.objects.filter(Q(browser_id=user_id) & F('overdraft') >= 0).values_list('browser_name')
+    result_book = Book.objects.filter(Q(book_id=book_id) & Q(book_status=True)).values_list('book_name')
+    borrow_book = BorrowInfo.objects.filter(Q(book_id=book_id) & Q(borrow_browser_id=user_id))
+    if result_book and result_user and not borrow_book:
+        # 判断借书人的记录直接创建 不存在一个人借两本书
+        BorrowInfo.objects.create(
+            browser_time=datetime.date.today(),
+            back_time=datetime.date.today() + datetime.timedelta(days=3),
+            borrow_browser_id=user_id,
+            borrow_browser_name=result_user[0],
+            borrow_book_id=book_id,
+            borrow_book_name=result_book[0],
+        )
+        # 判断借书信息的记录是否存在
+        # 存在修改  不存在添加
+        # 向BorrowBookInfo添加信息
+        judge_0 = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(book_remain=F('book_remain') - 1)
+        judge_1 = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(browser_total=F('browser_total') + 1)
+        if not judge_0 and not judge_1:
+            # 两个为真说明有数据则不添加数据  如果为假就添加数据
+            BorrowBookInfo.objects.create(
+                borrow_book_id=book_id,
+                borrow_book_name=result_book[0],
+                book_remain=4,
+                browser_total=1,
+            )
         data = {
             'code': 0
         }
@@ -170,28 +204,112 @@ def search_own_book(request):
     :param request:
     :return:
     """
-    user_id = request.GET['userId']
-    result = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id))
-    if result:
-        pin = serializers.serialize("json", result)
-        return JsonResponse(pin, safe=False)
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    user_id = accept['userId']
+    result_remain = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id))
+    if result_remain:
+        # 图书信息
+        # 由于图书表和借阅信息表分开，所以需要先获取id在获取书籍的剩余量
+        remain_number_ids = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list('borrow_book_id')
+        remain_result = []
+        for i in remain_number_ids:
+            remain_number = BorrowBookInfo.objects.filter(Q(borrow_book_id=i[0])).values_list('book_remain')
+            remain_result.append(remain_number[0][0])
+        # 获取用户的书籍信息  正向查询
+        result_book = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list(
+            'borrow_book_name__book_name',
+            'borrow_book_name__book_id',
+            'borrow_book_name__book_price',
+            'borrow_book_name__book_type',
+            'borrow_book_name__book_author',
+            'borrow_book_name__book_describe',
+            'borrow_book_name__book_content',
+            'borrow_book_name__book_year',
+            'borrow_book_name__book_status',
+        )
+        # 将所有的数据生成对象数组 返回给前端
+        all_data = []
+        for i in range(len(result_book)):
+            one = {
+                'title': result_book[i][0],
+                'id': result_book[i][1],
+                'price': result_book[i][2],
+                'number': remain_result[i],
+                'type': result_book[i][3],
+                'author': result_book[i][4],
+                'description': result_book[i][5],
+                'content': result_book[i][6],
+                'time': result_book[i][7],
+                'isBorrow': result_book[i][8],
+            }
+            all_data.append(one)
+
+        data = {
+            'code': 0,
+            'data': all_data,
+        }
     else:
         data = {
             'code': 1
         }
-        return JsonResponse(data)
+    return JsonResponse(data)
 
 
 def show_all(request):
-    # 查询个人的借书信息
+    # 查询个人的借书信息  输出超时书籍和处理办法
     # if request.GET['userId']:
-    user_id = request.GET['userId']
-    result = BorrowInfo.objects.filter(Q(browser_id=user_id)).order_by('-back_time')
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    user_id = accept['userId']
+    result = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list('browser_time')
     if result:
-        pin = serializers.serialize("json", result)
-        return JsonResponse(pin, safe=False)
+        # 查询超出时间的书籍
+        remain_number_ids = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list('borrow_book_id')
+        remain_result = []
+        for i in remain_number_ids:
+            remain_number = BorrowBookInfo.objects.filter(Q(borrow_book_id=i[0])).values_list('book_remain')
+            remain_result.append(remain_number[0][0])
+        sub_time = (datetime.date.today() - result[0][0]).days
+        # 将超出的书籍进行返回
+        result_book = BorrowInfo.objects.filter(longtime__lt=sub_time - 1).values_list(
+            'borrow_book_name__book_name',
+            'borrow_book_name__book_id',
+            'borrow_book_name__book_price',
+            'borrow_book_name__book_type',
+            'borrow_book_name__book_author',
+            'borrow_book_name__book_describe',
+            'borrow_book_name__book_content',
+            'borrow_book_name__book_year',
+            'borrow_book_name__book_status',
+        )
+
+        # 欠费处理  一天一毛钱
+        Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') - sub_time * 0.1)
+        # 输出数据
+        all_data = []
+        for i in range(len(result_book)):
+            one = {
+                'title': result_book[i][0],
+                'id': result_book[i][1],
+                'price': result_book[i][2],
+                'number': remain_result[i],
+                'type': result_book[i][3],
+                'author': result_book[i][4],
+                'description': result_book[i][5],
+                'content': result_book[i][6],
+                'time': result_book[i][7],
+                'isBorrow': result_book[i][8],
+
+            }
+            all_data.append(one)
+
+        data = {
+            'code': 0,
+            'data': all_data,
+        }
     else:
         data = {
             'code': 1
         }
-        return JsonResponse(data)
+    return JsonResponse(data)
