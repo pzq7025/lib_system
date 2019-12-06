@@ -11,4 +11,5 @@ urlpatterns = [
     path('bookCancelBorrow’/', views.book_cancel_borrow, name=app_name),  # 取消借阅
     path('searchOwnBook/', views.search_own_book, name=app_name),  # 查询自己的书籍
     path('bookBorrow/', views.book_borrow, name=app_name),  # 借阅书籍
+    path('searchAll/', views.show_all, name=app_name),  # 查询个人的借书信息
 ]

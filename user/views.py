@@ -45,12 +45,25 @@ def add_money(request):
     user_id = request.GET['userId']
     money = request.GET['money']
     result = Browser.objects.filter(Q(browser_id=user_id))
-    print(result.values_list())
     if result:
-        Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') + money)
-        browser_info = Browser.objects.filter(Q(browser_id=user_id))
-        print(browser_info)
-        pin = serializers.serialize("json", browser_info)
+        # Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') + money)
+        # browser_info = BorrowInfo.objects.get(borrow_browser_id=user_id).rbi_book_id.
+        # print(browser_info)
+        book_info = Book.objects.filter(Q(borrow_browser_id=user_id)).values()
+        data = {
+            'title': '',
+            'id': '',
+            'price': '',
+            'number': '',  # 剩余数量
+            'type': '',  # 图书种类 书籍type=1 或者 杂志type=2
+            'author': '',
+            'description': '',
+            'content': '',
+            'time': '',  # 对于有userId的
+            'isBorrow': '',  # 对于有userId的
+        }
+        # pin = serializers.serialize("json", browser_info)
+        pin = {1: 2}
         return JsonResponse(pin, safe=False)
     else:
         data = {
@@ -159,6 +172,21 @@ def search_own_book(request):
     """
     user_id = request.GET['userId']
     result = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id))
+    if result:
+        pin = serializers.serialize("json", result)
+        return JsonResponse(pin, safe=False)
+    else:
+        data = {
+            'code': 1
+        }
+        return JsonResponse(data)
+
+
+def show_all(request):
+    # 查询个人的借书信息
+    # if request.GET['userId']:
+    user_id = request.GET['userId']
+    result = BorrowInfo.objects.filter(Q(browser_id=user_id)).order_by('-back_time')
     if result:
         pin = serializers.serialize("json", result)
         return JsonResponse(pin, safe=False)

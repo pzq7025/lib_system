@@ -46,7 +46,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -82,17 +82,10 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 驱动
-<<<<<<< HEAD
         'NAME': 'lib_system',
         'USER': 'root',
         'PASSWORD': 'tyy5201314!',
         'HOST': 'rm-bp1a16zhf40aqg6f4po.mysql.rds.aliyuncs.com',
-=======
-        'NAME': '*********',
-        'USER': '*********',
-        'PASSWORD': '*********',
-        'HOST': '************',
->>>>>>> 6e581abfc6f5f601e0391d25d5903226182daa12
         'PORT': '3306',
     },
 }
@@ -128,10 +121,31 @@ USE_L10N = True
 
 USE_TZ = True
 
-# 设置跨域
-CORS_ORIGIN_ALLOW_ALL = True
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# 设置post的跨域
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ORIGIN_WHITELIST = [
+    "https://example.com",
+    "https://sub.example.com",
+    "http://localhost:8080",
+    "http://127.0.0.1:9000",
+    "http://127.0.0.1:3000"
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]

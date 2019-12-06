@@ -134,7 +134,7 @@ class BorrowInfo(models.Model):
     # browser = models.ForeignKey(to=Browser, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="借阅者")
 
     def __str__(self):
-        return f"{self.borrow_browser_id}-{self.borrow_browser_name}"
+        return f"{self.borrow_browser_id_id}-{self.borrow_browser_name}"
 
     class Meta:
         db_table = 'BorrowInfo'
