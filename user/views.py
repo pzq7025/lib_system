@@ -49,15 +49,16 @@ def add_money(request):
     :param request:
     :return:
     """
-    user_id = request.GET['userId']
-    money = request.GET['money']
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    user_id = accept['userId']
+    money = accept['money']
     # 充钱 将增加余额数量
     result = Browser.objects.filter(Q(browser_id=user_id))
     if result:
-        after = Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') + money)
+        Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') + money)
         data = {
             'code': 0,
-            'leftMoney': after,
         }
     else:
         data = {
@@ -108,10 +109,11 @@ def change_password(request):
     ob = request.body.decode('utf-8')
     accept = json.loads(ob)
     user_id = accept['userId']
-    user_password = accept['passWord']
+    user_old_password = accept['oldPassword']
+    user_new_password = accept['newPassword']
     # 获取前端传来的数据直接对数据进行修改
-    result_user = Browser.objects.filter(Q(browser_id=user_id)).update(browser_password=user_password)
-    if result_user:
+    operator = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_old_password)).update(browser_password=user_new_password)
+    if operator:
         data = {
             'code': 0
         }
@@ -285,7 +287,7 @@ def show_all(request):
         )
 
         # 欠费处理  一天一毛钱
-        Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') - sub_time * 0.1)
+        detial_result = Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') - sub_time * 0.1)
         # 输出数据
         all_data = []
         for i in range(len(result_book)):
@@ -300,7 +302,7 @@ def show_all(request):
                 'content': result_book[i][6],
                 'time': result_book[i][7],
                 'isBorrow': result_book[i][8],
-
+                'leftMoney': detial_result,
             }
             all_data.append(one)
 
