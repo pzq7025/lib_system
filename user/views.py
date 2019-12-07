@@ -264,7 +264,8 @@ def show_all(request):
     ob = request.body.decode('utf-8')
     accept = json.loads(ob)
     user_id = accept['userId']
-    result = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list('browser_time')
+    # 超额时间应该以还书时间为准
+    result = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list('back_time')
     if result:
         # 查询超出时间的书籍
         remain_number_ids = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list('borrow_book_id')
