@@ -287,7 +287,8 @@ def show_all(request):
         )
 
         # 欠费处理  一天一毛钱
-        detial_result = Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') - sub_time * 0.1)
+        Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') - sub_time * 0.1)
+        detail_result = Browser.objects.filter(Q(browser_id=user_id)).values('overdraft')
         # 输出数据
         all_data = []
         for i in range(len(result_book)):
@@ -302,7 +303,7 @@ def show_all(request):
                 'content': result_book[i][6],
                 'time': result_book[i][7],
                 'isBorrow': result_book[i][8],
-                'leftMoney': detial_result,
+                'leftMoney': detail_result[0]['overdraft'],
             }
             all_data.append(one)
 
