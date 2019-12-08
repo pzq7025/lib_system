@@ -12,4 +12,5 @@ urlpatterns = [
     path('bookBorrow/', views.book_borrow, name=app_name),  # 借阅书籍
     path('searchOwnBook/', views.search_own_book, name=app_name),  # 查询自己的书籍
     path('searchAll/', views.show_all, name=app_name),  # 查询个人的借书信息
+    path('bookBorrowContinue/', views.continue_book, name=app_name),  # 续借
 ]

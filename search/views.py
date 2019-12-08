@@ -13,80 +13,102 @@ from django.db.models import F
 # Create your views here.
 
 
-# def search_book(request):
-#     book_name = request.GET['bookname']
-#     data = {}
-#     serialize_data = serializers.serialize('json', Book.objects.all())  # 序列化
-#     if book_name == 'java' or book_name == 'python':
-#         data = {
-#             'result_name': 'java or python',
-#             'status': 200,
-#         }
-#     else:
-#         data = {
-#             'status': 404,
-#         }
-#     return JsonResponse(data)
-#
-#
-# def show_all(request):
-#     # if request.GET['userId']:
-#     ob = request.body.decode('utf-8')
-#     accept = json.loads(ob)
-#     user_id = accept['userId']
-#     print(user_id)
-#     # 外键__要查询的字段
-#     # 查询成功 用Q查询加快查询速度  F查询加快逻辑处理速度
-#     result = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list('borrow_book_name__book_id', 'borrow_book_name__book_name')
-#     # result = BorrowInfo.objects.all(borrow_browser_id_id=user_id).borrow_book_id.all()
-#     print(result)
-#     if user_id:
-#         # pin = serializers.serialize("json", result)
-#         data = {str(user_id): 2}
-#         return JsonResponse(data)
-#     else:
-#         data = {
-#             'code': 1
-#         }
-#         return JsonResponse(data)
-# x = request.GET
-# print(x)
-# return JsonResponse({1: 2})
+def search_book(request):
+    """
+    进行模糊查询
+    :param request:
+    :return:
+    """
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    book_name = accept['bookName']
+    result_book = Book.objects.filter(book_name__icontains=book_name).values_list(
+        'book_name',
+        'book_id',
+        'book_author',
+        'book_describe',
+        'book_content',
+        'book_status',
+        'book_price',
+        'book_type',
+        'book_year',
+    )
+    if result_book:
+        all_data = []
+        for i in range(len(result_book)):
+            one = {
+                'title': result_book[i][0],
+                'id': result_book[i][1],
+                'author': result_book[i][2],
+                'description': result_book[i][3],
+                'content': result_book[i][4],
+                'isBorrow': result_book[i][5],
+                'money': result_book[i][6],
+                'type': result_book[i][7],
+                'year': result_book[i][8],
+            }
+            all_data.append(one)
+        data = {
+            'code': 0,
+            'info': all_data,
+        }
+    else:
+        data = {
+            'code': 1
+        }
+    return JsonResponse(data)
 
 
-# book_queryset = Book.objects.all().order_by('book_number')
-# book_browser_queryset = BorrowBookInfo.objects.all().order_by('-browser_total')
-# result_book = []
-# result_book_browser = []
-# for i in book_queryset[:10]:
-#     result_book.append({
-#         'id': i.book_id,
-#         'title': i.book_name,
-#         'description': i.book_publish,
-#         'content': i.book_author
-#     })
-#
-# for i in book_browser_queryset[:10]:
-#     result_book_browser.append({
-#         'id': i.book_id,
-#         'title': i.book_name,
-#         'description': i.browser_total,
-#         'content': i.book_remain,
-#     })
-# return_result = {
-#     'code': 0,
-#     'listGood': result_book,
-#     'listBorrow': result_book_browser,
-# }
+def every_book(request):
+    """
+    查询每一本书籍
+    :param request:
+    :return:
+    """
+    ob = request.body.decode('utf-8')
+    accept = json.loads(ob)
+    get_book_id = accept['bookId']
+    result_book = Book.objects.filter(Q(book_id=get_book_id)).values_list(
+        'book_name',
+        'book_id',
+        'book_author',
+        'book_describe',
+        'book_content',
+        'book_status',
+        'book_price',
+        'book_type',
+        'book_year',
+    )
+    if result_book:
+        data = {
+            'info': [
+                {
+                    'title': result_book[0][0],
+                    'id': result_book[0][1],
+                    'author': result_book[0][2],
+                    'description': result_book[0][3],
+                    'content': result_book[0][4],
+                    'isBorrow': result_book[0][5],
+                    'money': result_book[0][6],
+                    'type': result_book[0][7],
+                    'year': result_book[0][8],
+                }
+            ],
+            'code': 1,
+        }
+    else:
+        data = {
+            'code': 0
+        }
+    return JsonResponse(data)
 
 
-# else:
-#     return_result = {
-#         'result': None
-#     }
-#
-# return JsonResponse(return_result)
 def show_home_all(request):
+    """
+    按照查询排行  分别将剩余量和借阅量前10的数据返回
+    :param request:
+    :return:
+    """
     ob = request.body.decode('utf-8')
     accept = json.loads(ob)
     user_id = accept['userId']
@@ -150,8 +172,8 @@ def show_home_all(request):
             all_data_1.append(one_1)
         data = {
             'code': 0,
-            'data': all_data,
-            'data1': all_data_1,
+            'listGood': all_data,
+            'listBorrow': all_data_1,
         }
     else:
         data = {
