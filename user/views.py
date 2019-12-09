@@ -26,7 +26,7 @@ def login(request):
     user_id = accept['username']
     user_password = accept['password']
     # 登录验证  成功返回True
-    result_user = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password)).values_list('browser_id', 'browser_name', 'browser_type')
+    result_user = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password)).values_list('browser_id', 'browser_name', 'browser_type', 'overdraft')
     if result_user:
         data = {
             'code': 0,
@@ -34,6 +34,7 @@ def login(request):
                 'userId': result_user[0][0],
                 'userName': result_user[0][1],
                 'userType': result_user[0][2],
+                'leftMoney': result_user[0][3],
             }],
         }
     else:
@@ -61,7 +62,7 @@ def add_money(request):
         Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') + money)
         detail_result = Browser.objects.filter(Q(browser_id=user_id)).values('overdraft')
         # 当把钱还清了就可以继续借书了
-        if detail_result >= 0:
+        if detail_result[0]['overdraft'] >= 0:
             Browser.objects.filter(Q(browser_id=user_id)).update(browser_status=True)
         data = {
             'code': 0,
@@ -172,18 +173,19 @@ def book_borrow(request):
     accept = json.loads(ob)
     user_id = accept['userId']
     book_id = accept['bookId']
-    result_user = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_status=True) & (F('overdraft')) >= 0).values_list('browser_name')
-    result_book = Book.objects.filter(Q(book_id=book_id) & Q(book_status=True)).values_list('book_name')
-    borrow_book = BorrowInfo.objects.filter(Q(book_id=book_id) & Q(borrow_browser_id=user_id))
+    result_user = Browser.objects.get(Q(browser_id=user_id) & Q(browser_status=True) & Q(overdraft__gte=0))
+    result_book = Book.objects.get(Q(book_id=book_id) & Q(book_status=True))
+    borrow_book = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).values_list()
     if result_book and result_user and not borrow_book:
         # 判断借书人的记录直接创建 不存在一个人借两本书  多以borrow_book永远为真
         BorrowInfo.objects.create(
+            borrow_info=datetime.datetime.now(),
             browser_time=datetime.date.today(),
-            back_time=datetime.date.today() + datetime.timedelta(days=3),
-            borrow_browser_id=user_id,
-            borrow_browser_name=result_user[0][0],
-            borrow_book_id=book_id,
-            borrow_book_name=result_book[0][0],
+            back_time=datetime.date.today() + datetime.timedelta(days=30),
+            borrow_browser_id=result_user,
+            borrow_browser_name=result_user,
+            borrow_book_id=result_book,
+            borrow_book_name=result_book,
         )
         # 判断借书信息的记录是否存在 存在修改  不存在添加
         # 向BorrowBookInfo添加信息
@@ -227,8 +229,8 @@ def search_own_book(request):
     ob = request.body.decode('utf-8')
     accept = json.loads(ob)
     user_id = accept['userId']
-    page_size = accept['pageSize']  # 每个页面的数据
-    skip_page = accept['skipPage']  # 翻页
+    page_size = int(accept['pageSize'])  # 每个页面的数据
+    skip_page = int(accept['skipPage'])  # 翻页
     result_remain = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id))
     if result_remain:
         # 图书信息
@@ -252,9 +254,11 @@ def search_own_book(request):
         )
         # 将所有的数据生成对象数组 返回给前端
         all_data = []
-        area_judge = int(skip_page) * int(page_size)
+        # skip_page从1开始
+        area_judge = skip_page * page_size
+        # 没有超过最大限度
         if len(result_book) > area_judge:
-            for i in range(area_judge, area_judge + int(page_size)):
+            for i in range(area_judge, area_judge + page_size):
                 one = {
                     'title': result_book[i][0],
                     'id': result_book[i][1],
@@ -268,8 +272,9 @@ def search_own_book(request):
                     'isBorrow': result_book[i][8],
                 }
                 all_data.append(one)
+        # 超过最大限度 就输出开始位置到总长度的数据
         else:
-            for i in range(area_judge, len(all_data)):
+            for i in range((skip_page - 1) * page_size, len(result_book)):
                 one = {
                     'title': result_book[i][0],
                     'id': result_book[i][1],
@@ -296,7 +301,7 @@ def search_own_book(request):
     return JsonResponse(data)
 
 
-def show_all(request):
+def show_over_book(request):
     # 查询个人的借书信息  输出超时书籍和处理办法
     # if request.GET['userId']:
     ob = request.body.decode('utf-8')
@@ -313,7 +318,7 @@ def show_all(request):
             remain_result.append(remain_number[0][0])
         sub_time = (datetime.date.today() - result[0][0]).days
         # 将超出的书籍进行返回
-        result_book = BorrowInfo.objects.filter(longtime__lt=sub_time).values_list(
+        result_book = BorrowInfo.objects.filter(longtime__lte=sub_time).values_list(
             'borrow_book_name__book_name',
             'borrow_book_name__book_id',
             'borrow_book_name__book_price',
@@ -373,9 +378,9 @@ def continue_book(request):
     result = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).values_list('browser_time')
     # 借阅的时间
     sub_time = (datetime.date.today() - result[0][0]).days
-    if sub_time < 30:
+    if sub_time <= 30:
         BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(longtime=F('longtime') + 30)
-        BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(back_time=F('back_time') + 30)
+        BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(back_time=result[0][0] + datetime.timedelta(days=30))
         data = {
             'code': 0,
         }
