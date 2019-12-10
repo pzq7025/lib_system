@@ -23,10 +23,10 @@ def login(request):
     """
     ob = request.body.decode('utf-8')
     accept = json.loads(ob)
-    user_id = accept['username']
+    user_name = accept['username']
     user_password = accept['password']
     # 登录验证  成功返回True
-    result_user = Browser.objects.filter(Q(browser_id=user_id) & Q(browser_password=user_password)).values_list('browser_id', 'browser_name', 'browser_type', 'overdraft')
+    result_user = Browser.objects.filter(Q(browser_name=user_name) & Q(browser_password=user_password)).values_list('browser_id', 'browser_name', 'browser_type', 'overdraft')
     if result_user:
         data = {
             'code': 0,
@@ -57,7 +57,11 @@ def add_money(request):
     user_id = accept['userId']
     money = accept['money']
     # 充钱 将增加余额数量
-    result = Browser.objects.filter(Q(browser_id=user_id))
+    result = Browser.objects.filter(Q(browser_id=user_id)).values_list(
+        'browser_id',
+        'browser_name',
+        'browser_type',
+    )
     if result:
         Browser.objects.filter(Q(browser_id=user_id)).update(overdraft=F('overdraft') + money)
         detail_result = Browser.objects.filter(Q(browser_id=user_id)).values('overdraft')
@@ -66,7 +70,13 @@ def add_money(request):
             Browser.objects.filter(Q(browser_id=user_id)).update(browser_status=True)
         data = {
             'code': 0,
-            'info': detail_result[0]['overdraft'],
+            'info': [{
+                'userId': result[0][0],
+                'userName': result[0][1],
+                'userType': result[0][2],
+                'leftMoney': detail_result[0]['overdraft'],
+            }
+            ],
         }
     else:
         data = {
@@ -194,6 +204,8 @@ def book_borrow(request):
         judge_1 = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(browser_total=F('browser_total') + 1)
         # 借阅者的借阅量+1
         Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('browser_number') + 1)
+        Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('totals_statistics') + 1)
+        Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('hot_statistic') + 1)
         if not judge_0 and not judge_1:
             # 两个为真说明有数据则不添加新的数据  如果为假就添加新的数据
             BorrowBookInfo.objects.create(
@@ -204,6 +216,7 @@ def book_borrow(request):
             )
         # 判断书是不是被借完了  如果书借完了  就是不可借的状态
         judge_remain = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).values_list('book_remain')
+        # 如果剩余量为0就不可借
         if judge_remain[0][0] == 0:
             Book.objects.filter(Q(book_id=book_id)).update(book_status=False)
         # 判断借书量是不是上限了  上限了 就修改状态为False
@@ -251,6 +264,7 @@ def search_own_book(request):
             'borrow_book_name__book_content',
             'borrow_book_name__book_year',
             'borrow_book_name__book_status',
+            'borrow_book_name__book_url_pic',
         )
         # 将所有的数据生成对象数组 返回给前端
         all_data = []
@@ -270,6 +284,7 @@ def search_own_book(request):
                     'content': result_book[i][6],
                     'time': result_book[i][7],
                     'isBorrow': result_book[i][8],
+                    'picUrl': result_book[i][9],
                 }
                 all_data.append(one)
         # 超过最大限度 就输出开始位置到总长度的数据
@@ -286,6 +301,7 @@ def search_own_book(request):
                     'content': result_book[i][6],
                     'time': result_book[i][7],
                     'isBorrow': result_book[i][8],
+                    'picUrl': result_book[i][9],
                 }
                 all_data.append(one)
 
@@ -328,6 +344,7 @@ def show_over_book(request):
             'borrow_book_name__book_content',
             'borrow_book_name__book_year',
             'borrow_book_name__book_status',
+            'borrow_book_name__book_url_pic',
         )
 
         # 欠费处理  一天一毛钱
@@ -349,6 +366,7 @@ def show_over_book(request):
                 'content': result_book[i][6],
                 'time': result_book[i][7],
                 'isBorrow': result_book[i][8],
+                'picUrl': detail_result[i][9],
                 'leftMoney': detail_result[0]['overdraft'],
             }
             all_data.append(one)

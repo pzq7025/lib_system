@@ -56,8 +56,6 @@ class Book(models.Model):
 
     objects = models.Manager()
 
-    # browser = models.ManyToManyField(to=Browser, verbose_name='借书人', blank=True)
-
     def __str__(self):
         return self.book_name
 
@@ -65,25 +63,6 @@ class Book(models.Model):
         db_table = 'BookInfo'
         verbose_name = "图书信息表"
         verbose_name_plural = verbose_name
-
-
-# class Manage(models.Model):
-#     """
-#     存在问题 需要在admin里面来写
-#     图书管理员表
-#     """
-#     manage_id = models.CharField(max_length=20, primary_key=True, db_index=True, verbose_name="图书管理员编号")  # 管理者编号
-#     manage_name = models.CharField(max_length=20, verbose_name="图书管理员姓名")  # 管理者姓名
-#
-#     objects = models.Manager()
-#
-#     def __str__(self):
-#         return self.manage_name
-#
-#     class Meta:
-#         db_table = 'MangerInfo'
-#         verbose_name = "管理员信息表"
-#         verbose_name_plural = verbose_name
 
 
 class BorrowBookInfo(models.Model):
@@ -94,16 +73,13 @@ class BorrowBookInfo(models.Model):
     back_time = models.DateField(auto_now_add=True, verbose_name="到馆时间")  # 到馆时间
     book_remain = models.PositiveSmallIntegerField(verbose_name="在馆数", blank=True, default="5")  # 剩余的数量
     borrow_book_number = models.PositiveSmallIntegerField(verbose_name="总量", default="5")  # 书的数量
+    totals_statistics = models.PositiveSmallIntegerField(verbose_name="被借阅总次数", default='0')  # 被借阅的总次数
+    hot_statistic = models.PositiveSmallIntegerField(verbose_name="热度数", default='0')  # 热度数
 
     objects = models.Manager()
 
     borrow_book_id = models.ForeignKey(Book, to_field='book_id', on_delete=models.CASCADE, verbose_name="书籍编号", blank=True, null=True, related_name='rbbi_book_id')  # 借阅书的编号
     borrow_book_name = models.ForeignKey(Book, to_field='book_name', on_delete=models.CASCADE, verbose_name="书籍名称", blank=True, null=True, related_name='rbbi_book_name')  # 借阅书的名称
-
-    # borrow_book_number = models.ForeignKey(Book, to_field='book_number', on_delete=models.CASCADE, verbose_name="书籍总数", blank=True, null=True, related_name='rbbi_book_number')  # 总的书籍数
-
-    # borrow_book_id = models.ForeignKey(Book, to_field='book_id', on_delete=models.CASCADE, verbose_name="书籍编号", blank=True, null=True, related_name='book_id')  # 借阅书的编号
-    # borrow_book_name = models.ForeignKey(Book, to_field='book_name', on_delete=models.CASCADE, verbose_name="书籍名称", blank=True, null=True, related_name='book_name')  # 借阅书的名称
 
     def __str__(self):
         return f"{self.borrow_book_id}-{self.borrow_book_name}"
@@ -128,10 +104,6 @@ class BorrowInfo(models.Model):
     borrow_browser_name = models.ForeignKey(Browser, to_field='browser_name', on_delete=models.CASCADE, verbose_name="借书者姓名", blank=True, null=True, related_name='rbi_browser_name')  # 借阅人姓名
     borrow_book_id = models.ForeignKey(Book, to_field='book_id', on_delete=models.CASCADE, verbose_name="书籍编号", blank=True, null=True, related_name='rbi_book_id')  # 借阅书的编号
     borrow_book_name = models.ForeignKey(Book, to_field='book_name', on_delete=models.CASCADE, verbose_name="书籍名称", blank=True, null=True, related_name='rbi_book_name')  # 借阅书的名称
-
-    # borrow_browser_id = models.ForeignKey(Teacher, to_field='teacher_name', on_delete=models.SET_NULL, verbose_name='姓名', blank=True, null=True, related_name='teach_name')
-    # book = models.ForeignKey(to=Book, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="书籍")
-    # browser = models.ForeignKey(to=Browser, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="借阅者")
 
     def __str__(self):
         return f"{self.borrow_browser_id_id}-{self.borrow_browser_name}"

@@ -32,6 +32,7 @@ def search_book(request):
         'book_price',
         'book_type',
         'book_year',
+        'book_url_pic',
     )
     if result_book:
         all_data = []
@@ -46,6 +47,7 @@ def search_book(request):
                 'money': result_book[i][6],
                 'type': result_book[i][7],
                 'year': result_book[i][8],
+                'picUrl': result_book[i][9],
             }
             all_data.append(one)
         data = {
@@ -78,6 +80,7 @@ def every_book(request):
         'book_price',
         'book_type',
         'book_year',
+        'book_url_pic',
     )
     if result_book:
         data = {
@@ -92,6 +95,7 @@ def every_book(request):
                     'money': result_book[0][6],
                     'type': result_book[0][7],
                     'year': result_book[0][8],
+                    'picUrl': result_book[0][9],
                 }
             ],
             'code': 1,
@@ -123,6 +127,7 @@ def show_home_all(request):
             'borrow_book_name__book_content',
             'borrow_book_name__book_year',
             'borrow_book_name__book_status',
+            'borrow_book_name__book_url_pic',
             'book_remain',
         ).order_by('-book_remain')[:10]
         result_book_1 = BorrowBookInfo.objects.all().values_list(
@@ -135,6 +140,7 @@ def show_home_all(request):
             'borrow_book_name__book_content',
             'borrow_book_name__book_year',
             'borrow_book_name__book_status',
+            'borrow_book_name__book_url_pic',
             'book_remain',
         ).order_by('-browser_total')[:10]
         # 剩余量
@@ -153,6 +159,7 @@ def show_home_all(request):
                 'time': result_book[i][7],
                 'isBorrow': result_book[i][8],
                 'number': result_book[i][9],
+                'picUrl': result_book[i][10],
             }
             one_1 = {
                 'title': result_book_1[i][0],
@@ -165,6 +172,7 @@ def show_home_all(request):
                 'time': result_book_1[i][7],
                 'isBorrow': result_book_1[i][8],
                 'number': result_book_1[i][9],
+                'picUrl': result_book_1[i][10],
             }
             # 剩余量
             all_data.append(one)
