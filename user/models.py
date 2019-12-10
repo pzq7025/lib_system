@@ -74,7 +74,7 @@ class BorrowBookInfo(models.Model):
     book_remain = models.PositiveSmallIntegerField(verbose_name="在馆数", blank=True, default="5")  # 剩余的数量
     borrow_book_number = models.PositiveSmallIntegerField(verbose_name="总量", default="5")  # 书的数量
     totals_statistics = models.PositiveSmallIntegerField(verbose_name="被借阅总次数", default='0')  # 被借阅的总次数
-    hot_statistic = models.PositiveSmallIntegerField(verbose_name="热度数", default='0')  # 热度数
+    hot_statistics = models.PositiveSmallIntegerField(verbose_name="热度数", default='0')  # 热度数
 
     objects = models.Manager()
 
