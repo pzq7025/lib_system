@@ -129,7 +129,7 @@ def show_home_all(request):
             'borrow_book_name__book_status',
             'borrow_book_name__book_url_pic',
             'book_remain',
-        ).order_by('-book_remain')[:10]
+        ).order_by('-hot_statistics')[:10]
         result_book_1 = BorrowBookInfo.objects.all().values_list(
             'borrow_book_name__book_name',
             'borrow_book_name__book_id',
@@ -142,7 +142,7 @@ def show_home_all(request):
             'borrow_book_name__book_status',
             'borrow_book_name__book_url_pic',
             'book_remain',
-        ).order_by('-browser_total')[:10]
+        ).order_by('-totals_statistics')[:10]
         # 剩余量
         all_data = []
         # 借阅量
@@ -174,9 +174,9 @@ def show_home_all(request):
                 'number': result_book_1[i][9],
                 'picUrl': result_book_1[i][10],
             }
-            # 剩余量
+            # 好书  热评书籍
             all_data.append(one)
-            # 借阅量
+            # 总借阅的书籍  质量书籍
             all_data_1.append(one_1)
         data = {
             'code': 0,
