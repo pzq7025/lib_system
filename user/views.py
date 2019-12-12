@@ -203,8 +203,9 @@ def book_borrow(request):
         judge_exist_book_borrow_info = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id))
         # 借阅者的借阅量+1
         Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('browser_number') + 1)
-        Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('totals_statistics') + 1)
-        Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('hot_statistic') + 1)
+        # 借阅信息表中的总借阅量和热度+1
+        BorrowBookInfo.objects.filter(Q(browser_id=user_id)).update(browser_number=F('totals_statistics') + 1)
+        BorrowBookInfo.objects.filter(Q(browser_id=user_id)).update(browser_number=F('hot_statistics') + 1)
         if not judge_exist_book_borrow_info:
             # 两个为真说明有数据则不添加新的数据  如果为假就添加新的数据
             BorrowBookInfo.objects.create(
