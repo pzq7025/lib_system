@@ -231,6 +231,7 @@ def book_borrow(request):
         }
     else:
         data = {
+            'isBorrow': False,
             'code': 1
         }
     return JsonResponse(data)
