@@ -266,7 +266,7 @@ def search_own_book(request):
             'borrow_book_name__book_author',
             'borrow_book_name__book_describe',
             'borrow_book_name__book_content',
-            'book_remain',
+            'longtime',
             'borrow_book_name__book_status',
             'borrow_book_name__book_url_pic',
         )
@@ -348,7 +348,7 @@ def show_over_book(request):
             'borrow_book_name__book_author',
             'borrow_book_name__book_describe',
             'borrow_book_name__book_content',
-            'book_remain',
+            'longtime',
             'borrow_book_name__book_status',
             'borrow_book_name__book_url_pic',
         )
