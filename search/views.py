@@ -70,6 +70,8 @@ def every_book(request):
     ob = request.body.decode('utf-8')
     accept = json.loads(ob)
     get_book_id = accept['bookId']
+    get_user_id = accept['userId']
+    borrow_book = BorrowInfo.objects.filter(Q(borrow_browser_id=get_user_id) & Q(borrow_book_id=get_book_id)).values_list()
     result_book = Book.objects.filter(Q(book_id=get_book_id)).values_list(
         'book_name',
         'book_id',
@@ -82,27 +84,47 @@ def every_book(request):
         'book_year',
         'book_url_pic',
     )
-    if result_book:
+    try:
+        if borrow_book:
+            data = {
+                'info': [
+                    {
+                        'title': result_book[0][0],
+                        'id': result_book[0][1],
+                        'author': result_book[0][2],
+                        'description': result_book[0][3],
+                        'content': result_book[0][4],
+                        'isBorrow': False,
+                        'money': result_book[0][6],
+                        'type': result_book[0][7],
+                        'year': result_book[0][8],
+                        'picUrl': result_book[0][9],
+                    }
+                ],
+                'code': 0,
+            }
+        else:
+            data = {
+                'info': [
+                    {
+                        'title': result_book[0][0],
+                        'id': result_book[0][1],
+                        'author': result_book[0][2],
+                        'description': result_book[0][3],
+                        'content': result_book[0][4],
+                        'isBorrow': result_book[0][5],
+                        'money': result_book[0][6],
+                        'type': result_book[0][7],
+                        'year': result_book[0][8],
+                        'picUrl': result_book[0][9],
+                    }
+                ],
+                'code': 0,
+            }
+    except Exception as e:
+        print(e)
         data = {
-            'info': [
-                {
-                    'title': result_book[0][0],
-                    'id': result_book[0][1],
-                    'author': result_book[0][2],
-                    'description': result_book[0][3],
-                    'content': result_book[0][4],
-                    'isBorrow': result_book[0][5],
-                    'money': result_book[0][6],
-                    'type': result_book[0][7],
-                    'year': result_book[0][8],
-                    'picUrl': result_book[0][9],
-                }
-            ],
             'code': 1,
-        }
-    else:
-        data = {
-            'code': 0
         }
     return JsonResponse(data)
 

@@ -188,18 +188,7 @@ def book_borrow(request):
     # 书可借
     result_book = Book.objects.get(Q(book_id=book_id) & Q(book_status=True))
     # 以前已经存在的书籍
-    borrow_book = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).values_list(
-        'borrow_book_name__book_name',
-        'borrow_book_name__book_id',
-        'borrow_book_name__book_price',
-        'borrow_book_name__book_type',
-        'borrow_book_name__book_author',
-        'borrow_book_name__book_describe',
-        'borrow_book_name__book_content',
-        'longtime',
-        'borrow_book_name__book_status',
-        'borrow_book_name__book_url_pic',
-    )
+    borrow_book = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).values_list()
     try:
         if result_book and result_user and not borrow_book:
             # 判断借书人的记录直接创建 不存在一个人借两本书  多以borrow_book永远为真
@@ -245,30 +234,9 @@ def book_borrow(request):
                 'code': 0
             }
         else:
-            all_data = []
-            remain_result = []
-            remain_number_ids = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id)).values_list('borrow_book_id')
-            for i in remain_number_ids:
-                remain_number = BorrowBookInfo.objects.filter(Q(borrow_book_id=i[0])).values_list('book_remain')
-                remain_result.append(remain_number[0][0])
-            for i in range(len(borrow_book)):
-                one = {
-                    'title': borrow_book[i][0],
-                    'id': borrow_book[i][1],
-                    'price': borrow_book[i][2],
-                    'number': remain_result[i],
-                    'type': borrow_book[i][3],
-                    'author': borrow_book[i][4],
-                    'description': borrow_book[i][5],
-                    'content': borrow_book[i][6],
-                    'time': borrow_book[i][7],
-                    'isBorrow': False,
-                    'picUrl': borrow_book[i][9],
-                }
-                all_data.append(one)
             data = {
                 'code': 0,
-                'info': all_data,
+                'info': [],
                 'total': 0,
             }
     except Exception as e:
