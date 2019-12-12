@@ -157,7 +157,7 @@ class BorrowBookInfoAdmin(admin.ModelAdmin):
     # exclude = ('borrow_info',)
 
     # 在查看修改的时候显示的属性，第一个字段带有<a>标签，所以最好放标题
-    list_display = ('borrow_book_id', 'borrow_book_name', 'borrow_book_number', 'browser_total', 'book_remain', 'back_time')
+    list_display = ('borrow_book_id', 'borrow_book_name', 'browser_total', 'borrow_book_number', 'book_remain', 'totals_statistics', 'hot_statistics', 'back_time')
 
     # 设置需要添加<a>标签的字段
     # list_display_links = ('title',)

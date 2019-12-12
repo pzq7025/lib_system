@@ -200,13 +200,12 @@ def book_borrow(request):
         # 判断借书信息的记录是否存在 存在修改  不存在添加
         # 向BorrowBookInfo添加信息
         # 判断此书是不是第一次借阅
-        judge_0 = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(book_remain=F('book_remain') - 1)
-        judge_1 = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(browser_total=F('browser_total') + 1)
+        judge_exist_book_borrow_info = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id))
         # 借阅者的借阅量+1
         Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('browser_number') + 1)
         Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('totals_statistics') + 1)
         Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('hot_statistic') + 1)
-        if not judge_0 and not judge_1:
+        if not judge_exist_book_borrow_info:
             # 两个为真说明有数据则不添加新的数据  如果为假就添加新的数据
             BorrowBookInfo.objects.create(
                 borrow_book_id=book_id,
@@ -214,6 +213,9 @@ def book_borrow(request):
                 book_remain=4,
                 browser_total=1,
             )
+        else:
+            BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(book_remain=F('book_remain') - 1)
+            BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(browser_total=F('browser_total') + 1)
         # 判断书是不是被借完了  如果书借完了  就是不可借的状态
         judge_remain = BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).values_list('book_remain')
         # 如果剩余量为0就不可借
