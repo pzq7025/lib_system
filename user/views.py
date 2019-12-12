@@ -204,8 +204,8 @@ def book_borrow(request):
         # 借阅者的借阅量+1
         Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('browser_number') + 1)
         # 借阅信息表中的总借阅量和热度+1
-        BorrowBookInfo.objects.filter(Q(browser_id=user_id)).update(browser_number=F('totals_statistics') + 1)
-        BorrowBookInfo.objects.filter(Q(browser_id=user_id)).update(browser_number=F('hot_statistics') + 1)
+        BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(totals_statistics=F('totals_statistics') + 1)
+        BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(hot_statistics=F('hot_statistics') + 1)
         if not judge_exist_book_borrow_info:
             # 两个为真说明有数据则不添加新的数据  如果为假就添加新的数据
             BorrowBookInfo.objects.create(
@@ -265,7 +265,7 @@ def search_own_book(request):
             'borrow_book_name__book_author',
             'borrow_book_name__book_describe',
             'borrow_book_name__book_content',
-            'borrow_book_name__book_year',
+            'book_remain',
             'borrow_book_name__book_status',
             'borrow_book_name__book_url_pic',
         )
@@ -315,7 +315,9 @@ def search_own_book(request):
         }
     else:
         data = {
-            'code': 1
+            'code': 1,
+            'rows': "",
+            'total': "",
         }
     return JsonResponse(data)
 
@@ -345,7 +347,7 @@ def show_over_book(request):
             'borrow_book_name__book_author',
             'borrow_book_name__book_describe',
             'borrow_book_name__book_content',
-            'borrow_book_name__book_year',
+            'book_remain',
             'borrow_book_name__book_status',
             'borrow_book_name__book_url_pic',
         )
