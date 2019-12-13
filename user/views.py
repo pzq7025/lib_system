@@ -156,17 +156,26 @@ def book_cancel_borrow(request):
     # 如果操作成功  说明数据库中含有此信息  注意同个人不能同时借多本书
     # operator = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).order_by('-borrow_info').last().delete()
     # 因为不借阅就删除  所以不会出现冗余数据duplicate
-    operator = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).delete()
-    if operator:
-        # 对于存在数据  取消订阅  剩余数量+1 借阅量-1
-        BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(book_remain=F('book_remain') + 1)
-        BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(browser_total=F('browser_total') - 1)
+    try:
+        operator = BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).delete()
+        if operator:
+            # 对于存在数据  取消订阅  剩余数量+1 借阅量-1
+            BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(book_remain=F('book_remain') + 1)
+            BorrowBookInfo.objects.filter(Q(borrow_book_id=book_id)).update(browser_total=F('browser_total') - 1)
+            # 每次还书  借阅者的借书量也要减一
+            Browser.objects.filter(Q(browser_id=user_id)).update(browser_number=F('browser_number') - 1)
+            data = {
+                'code': 0
+            }
+        else:
+            data = {
+                'code': 0,
+                'operator': False,
+            }
+    except Exception as e:
+        print(e)
         data = {
-            'code': 0
-        }
-    else:
-        data = {
-            'code': 1
+            'code': 1,
         }
     return JsonResponse(data)
 
@@ -428,7 +437,8 @@ def continue_book(request):
     sub_time = (datetime.date.today() - result[0][0]).days
     if sub_time <= 30:
         BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(longtime=F('longtime') + 30)
-        BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(back_time=result[0][0] + datetime.timedelta(days=60))
+        # 可以实现无限续借 但是应该加一个最大次数
+        BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(back_time=F('back_time') + datetime.timedelta(days=30))
         data = {
             'code': 0,
         }
