@@ -428,7 +428,7 @@ def continue_book(request):
     sub_time = (datetime.date.today() - result[0][0]).days
     if sub_time <= 30:
         BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(longtime=F('longtime') + 30)
-        BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(back_time=result[0][0] + datetime.timedelta(days=30))
+        BorrowInfo.objects.filter(Q(borrow_browser_id=user_id) & Q(borrow_book_id=book_id)).update(back_time=result[0][0] + datetime.timedelta(days=60))
         data = {
             'code': 0,
         }
