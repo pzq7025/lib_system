@@ -1,0 +1,18 @@
+.header-search {
+    border: none;
+    outline: none;
+    margin-left: 10px;
+    width: 200px;
+}
+input::-webkit-input-placeholder {
+    color: rgba(0,0,0,0.2);
+    font-size: 14px;
+}
+input::-moz-placeholder {
+    color: rgba(0,0,0,0.2);
+    font-size: 14px;
+}
+input:-ms-input-placeholder {
+    color: rgba(0,0,0,0.2);
+    font-size: 14px;
+}
