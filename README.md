@@ -14,12 +14,23 @@ at the setting.py file, I hidden my rdf-mysql information.
 
 =====================================================================
 # version
+## python
 django == 2.14
+pip install django == 2.14
 
 bootstrap_admin == 0.4.3
+pip install django == bootstrap_admin
 
+mysqlclient == 1.4.5
+pip install mysqlclient == 1.4.5
+
+django-cors-headers
+pip install django-cors-headers == 3.1.1
+
+### mysql
 mysql == 5.7.25
 
+### react
 react == 6.12.1
 
 ======================================================================
