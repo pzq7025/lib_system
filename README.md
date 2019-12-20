@@ -15,16 +15,20 @@ at the setting.py file, I hidden my rdf-mysql information.
 =====================================================================
 # version
 ## python
-django == 2.14
+##### django
+
 pip install django == 2.14
 
-bootstrap_admin == 0.4.3
+##### bootstrap_admin
+
 pip install django == bootstrap_admin
 
-mysqlclient == 1.4.5
+##### mysqlclient
+
 pip install mysqlclient == 1.4.5
 
-django-cors-headers
+##### django-cors-headers
+
 pip install django-cors-headers == 3.1.1
 
 ### mysql
